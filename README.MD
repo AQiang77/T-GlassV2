@@ -175,7 +175,6 @@
 | Product(PinMap)  | schematic                                                   |
 | ---------------- | ----------------------------------------------------------- |
 | [T-Glass][1]     | [schematic](./schematic/LilyGO-T-Wristband-and-T-Glass.pdf) |
-| [T-Wristband][2] | [schematic](./schematic/LilyGO-T-Wristband-and-T-Glass.pdf) |
 
 ##### T-Glass & T-Wristband datasheet
 
