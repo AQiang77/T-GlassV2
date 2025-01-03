@@ -4,16 +4,19 @@
 #include <LilyGo_Wristband.h>
 #include "cbuf.h"
 #include <MadgwickAHRS.h> //MadgwickAHRS from https://github.com/arduino-libraries/MadgwickAHRS
+#include <WiFi.h>
 
-#define PAGE_NUM (6)
-#define MENU_ICON_NUM (5)
+#define PAGE_NUM (8)
 
 #ifndef WIFI_SSID
-#define WIFI_SSID "Your WiFi SSID"
+#define WIFI_SSID "xinyuandianzi"
 #endif
 #ifndef WIFI_PASSWORD
-#define WIFI_PASSWORD "Your WiFi PASSWORD"
+#define WIFI_PASSWORD "AA15994823428"
 #endif
+
+#define VAD_FRAME_LENGTH_MS             30
+#define VAD_BUFFER_LENGTH               (VAD_FRAME_LENGTH_MS * MIC_I2S_SAMPLE_RATE / 1000)
 
 #pragma once
 typedef struct
@@ -28,6 +31,8 @@ typedef struct
 	lv_obj_t *screen_esp_now_cont;//4
 	lv_obj_t *screen_set_cont;//5
 	lv_obj_t *screen_tileview_set_cont;//5.1
+	lv_obj_t *screen_wifi_rssi_cont;//6
+	lv_obj_t *screen_mic_cont;//7
 
 	lv_obj_t *screen_start;
 	lv_obj_t *screen_start_cont;
@@ -85,6 +90,14 @@ typedef struct
     lv_obj_t *screen_tileview_set_Switch_page_sw;
     lv_obj_t *screen_tileview_set_Switch_page_label;
 
+	lv_obj_t *screen_wifi_rssi;
+	lv_obj_t *screen_wifi_rssi_label;
+	lv_obj_t *screen_wifi_rssi_num;
+	
+	lv_obj_t *screen_mic;
+	lv_obj_t *screen_mic_label;
+	lv_obj_t *screen_mic_count;
+
 
 }lv_ui;
 
@@ -130,8 +143,16 @@ extern struct_message esp_now_data;
 extern bool reset;
 extern lv_obj_t* scr_arry[PAGE_NUM];
 extern bool sw_wifi_status;
+extern bool wifi_connect_status;
 extern bool sw_espnow_status;
 extern bool sw_page_status;
+
+#if ESP_ARDUINO_VERSION_VAL(2, 0, 9) == ESP_ARDUINO_VERSION
+#include <esp_vad.h>
+extern int16_t *vad_buff;
+extern uint32_t noise_count;
+extern vad_handle_t vad_inst;
+#endif // Version check
 
 LV_IMG_DECLARE(_weitiao1_60x60);
 LV_IMG_DECLARE(_up_60x60);
@@ -141,6 +162,7 @@ LV_IMG_DECLARE(_right_60x60);
 LV_IMG_DECLARE(_set_60x60);
 
 LV_FONT_DECLARE(lv_font_Acme_Regular_16);
+LV_FONT_DECLARE(lv_font_Acme_Regular_20);
 LV_FONT_DECLARE(lv_font_Acme_Regular_24);
 LV_FONT_DECLARE(lv_font_Acme_Regular_30);
 LV_FONT_DECLARE(lv_font_SourceHanSerifSC_Regular_16);

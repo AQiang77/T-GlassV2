@@ -14,11 +14,9 @@
 // The esp_vad function is currently only reserved for Arduino version 2.0.9
 #if ESP_ARDUINO_VERSION_VAL(2, 0, 9) == ESP_ARDUINO_VERSION
 #include <esp_vad.h>
-
-static vad_handle_t vad_inst;
-static int16_t *vad_buff = NULL;
-static uint32_t noise_count;
-
+vad_handle_t vad_inst;
+int16_t *vad_buff = NULL;
+uint32_t noise_count;
 #else
 #define TILEVIEW_CNT 5
 #endif // Version check
@@ -28,9 +26,6 @@ static uint32_t noise_count;
 #define NTP_SERVER1 "pool.ntp.org"
 #define NTP_SERVER2 "time.nist.gov"
 #define WIFI_MSG_ID 0x1001
-
-#define VAD_FRAME_LENGTH_MS 30
-#define VAD_BUFFER_LENGTH (VAD_FRAME_LENGTH_MS * MIC_I2S_SAMPLE_RATE / 1000)
 
 // object
 LilyGo_Class amoled;
@@ -46,6 +41,7 @@ int8_t choose_direction = 0;
 int8_t current_set_tileview = 0;
 bool touch_press = false;
 bool page_lock = false;
+bool wifi_connect_status = false;
 cbuf accel_data_buffer(1);
 cbuf gyro_data_buffer(1);
 cbuf mag_data_buffer(1);
@@ -185,7 +181,7 @@ void setup()
     // Set the gyroscope sensor result callback function
     amoled.onResultEvent(SENSOR_ID_GYRO_PASS, gyro_process_callback);
 
-    //Results can only be displayed on the serial port after uncommenting
+    // Results can only be displayed on the serial port after uncommenting
     amoled.configure(SENSOR_ID_AR, sample_rate, report_latency_ms);
     amoled.onResultEvent(SENSOR_ID_AR, activityArray_callback);
 
@@ -299,9 +295,11 @@ static void WiFiEvent(WiFiEvent_t event)
         Serial.println("WiFi clients stopped");
         break;
     case ARDUINO_EVENT_WIFI_STA_CONNECTED:
+        wifi_connect_status = true;
         Serial.println("Connected to access point");
         break;
     case ARDUINO_EVENT_WIFI_STA_DISCONNECTED:
+        wifi_connect_status = false;
         Serial.println("Disconnected from WiFi access point");
         break;
     case ARDUINO_EVENT_WIFI_STA_AUTHMODE_CHANGE:
@@ -396,6 +394,12 @@ void button_event_callback(ButtonState state)
                 lv_obj_set_tile_id(ui.screen_tileview_set_tile, 0, current_set_tileview, LV_ANIM_ON);
             }
             break;
+        case 6:
+            lv_scr_load_anim(scr_arry[srceen_current], LV_SCR_LOAD_ANIM_MOVE_RIGHT, 200, 0, false);
+            break;
+        case 7:
+            lv_scr_load_anim(scr_arry[srceen_current], LV_SCR_LOAD_ANIM_MOVE_RIGHT, 200, 0, false);
+            break;
         default:
             break;
         }
@@ -463,6 +467,12 @@ void button_event_callback(ButtonState state)
                 }
                 lv_obj_set_tile_id(ui.screen_tileview_set_tile, 0, current_set_tileview, LV_ANIM_ON);
             }
+            break;
+        case 6:
+            lv_scr_load_anim(scr_arry[srceen_current], LV_SCR_LOAD_ANIM_MOVE_LEFT, 200, 0, false);
+            break;
+        case 7:
+            lv_scr_load_anim(scr_arry[srceen_current], LV_SCR_LOAD_ANIM_MOVE_LEFT, 200, 0, false);
             break;
         default:
             break;
@@ -534,6 +544,10 @@ void touch_event_callback(ButtonState state)
                 lv_obj_set_pos(ui.screen_sensor_cont, srceen_cont_pos_x, srceen_cont_pos_y);
                 lv_obj_set_pos(ui.screen_voltage_cont, srceen_cont_pos_x, srceen_cont_pos_y);
                 lv_obj_set_pos(ui.screen_esp_now_cont, srceen_cont_pos_x, srceen_cont_pos_y);
+                lv_obj_set_pos(ui.screen_set_cont, srceen_cont_pos_x, srceen_cont_pos_y);
+                lv_obj_set_pos(ui.screen_tileview_set_cont, srceen_cont_pos_x, srceen_cont_pos_y);
+                lv_obj_set_pos(ui.screen_wifi_rssi_cont, srceen_cont_pos_x, srceen_cont_pos_y);
+                lv_obj_set_pos(ui.screen_mic_cont, srceen_cont_pos_x, srceen_cont_pos_y);
 
                 lv_obj_update_layout(ui.screen_time_cont);
                 lv_obj_update_layout(ui.screen_pos_cont);
@@ -541,6 +555,10 @@ void touch_event_callback(ButtonState state)
                 lv_obj_update_layout(ui.screen_sensor_cont);
                 lv_obj_update_layout(ui.screen_voltage_cont);
                 lv_obj_update_layout(ui.screen_esp_now_cont);
+                lv_obj_update_layout(ui.screen_set_cont);
+                lv_obj_update_layout(ui.screen_tileview_set_cont);
+                lv_obj_update_layout(ui.screen_wifi_rssi_cont);
+                lv_obj_update_layout(ui.screen_mic_cont);
             }
             page_lock = true;
 
@@ -655,7 +673,7 @@ static void activityArray_callback(uint8_t sensor_id, uint8_t *data_ptr, uint32_
         uint16_t maskedVal = (value & (0x0001 << i)) >> i;
         if (maskedVal)
         {
-            Serial.printf("activity:%s\n",activityArray[i].activityMessage.c_str());
+            Serial.printf("activity:%s\n", activityArray[i].activityMessage.c_str());
             return;
         }
     }
@@ -667,7 +685,7 @@ static void stc_callback(uint8_t sensor_id, uint8_t *data_ptr, uint32_t len)
     for (uint32_t i = 0; i < len; i++)
     {
         value = data_ptr[i];
-        if(value != 0)  
+        if (value != 0)
             Serial.printf("stc_count:%d\n", value);
     }
 }

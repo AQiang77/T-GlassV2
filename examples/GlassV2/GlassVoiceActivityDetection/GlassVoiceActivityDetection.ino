@@ -9,25 +9,30 @@
 #include <LilyGo_Wristband.h>
 #include <LV_Helper.h>
 
-// The resolution of the non-magnified side of the glasses reflection area is about 126x126, 
+// The resolution of the non-magnified side of the glasses reflection area is about 126x126,
 // and the magnified area is smaller than 126x126
-#define GlassViewableWidth              126
-#define GlassViewableHeight             126
+#define GlassViewableWidth 126
+#define GlassViewableHeight 126
 
 LilyGo_Class amoled;
 
 // The esp_vad function is currently only reserved for Arduino version 2.0.9
-#if ESP_ARDUINO_VERSION_VAL(2,0,9) == ESP_ARDUINO_VERSION
+#if ESP_ARDUINO_VERSION_VAL(2, 0, 9) == ESP_ARDUINO_VERSION
 
 #include <esp_vad.h>
 
-#define VAD_FRAME_LENGTH_MS             30
-#define VAD_BUFFER_LENGTH               (VAD_FRAME_LENGTH_MS * MIC_I2S_SAMPLE_RATE / 1000)
+#define VAD_FRAME_LENGTH_MS 30
+#define VAD_BUFFER_LENGTH (VAD_FRAME_LENGTH_MS * MIC_I2S_SAMPLE_RATE / 1000)
 
 static int16_t *vad_buff = NULL;
 static vad_handle_t vad_inst;
 static uint32_t noise_count;
 lv_obj_t *noise_cnt;
+
+#define TILEVIEW_CNT 6
+#else
+#define TILEVIEW_CNT 5
+#endif // Version check
 
 void setup(void)
 {
@@ -38,8 +43,10 @@ void setup(void)
 
     // Initialization screen and peripherals
     bool rslt = amoled.begin();
-    if (!rslt) {
-        while (1) {
+    if (!rslt)
+    {
+        while (1)
+        {
             Serial.println("The board model cannot be detected, please raise the Core Debug Level to an error");
             delay(1000);
         }
@@ -81,21 +88,26 @@ void setup(void)
     lv_obj_align_to(noise_cnt, noise, LV_ALIGN_OUT_BOTTOM_MID, 0, 10);
 
     // Initialize esp-sr vad detected
-#if ESP_IDF_VERSION_VAL(4,4,1) == ESP_IDF_VERSION
+#if ESP_IDF_VERSION_VAL(4, 4, 1) == ESP_IDF_VERSION
     vad_inst = vad_create(VAD_MODE_0, MIC_I2S_SAMPLE_RATE, VAD_FRAME_LENGTH_MS);
-#elif  ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(4,4,1)
+#elif ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(4, 4, 1)
     vad_inst = vad_create(VAD_MODE_0);
 #else
 #error "No support this version."
 #endif
-    if (psramFound()) {
+    if (psramFound())
+    {
         vad_buff = (int16_t *)ps_malloc(VAD_BUFFER_LENGTH * sizeof(short));
-    } else {
+    }
+    else
+    {
         vad_buff = (int16_t *)malloc(VAD_BUFFER_LENGTH * sizeof(short));
     }
-    if (vad_buff == NULL) {
+    if (vad_buff == NULL)
+    {
         Serial.println("Memory allocation failed!");
-        while (1) {
+        while (1)
+        {
             delay(1000);
         }
     }
@@ -105,16 +117,18 @@ void loop()
 {
     size_t read_len;
 
-    if (amoled.readMicrophone((char *) vad_buff, VAD_BUFFER_LENGTH * sizeof(short), &read_len)) {
+    if (amoled.readMicrophone((char *)vad_buff, VAD_BUFFER_LENGTH * sizeof(short), &read_len))
+    {
         // Feed samples to the VAD process and get the result
-#if   ESP_IDF_VERSION_VAL(4,4,1) == ESP_IDF_VERSION
+#if ESP_IDF_VERSION_VAL(4, 4, 1) == ESP_IDF_VERSION
         vad_state_t vad_state = vad_process(vad_inst, vad_buff);
-#elif ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(4,4,1)
+#elif ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(4, 4, 1)
         vad_state_t vad_state = vad_process(vad_inst, vad_buff, MIC_I2S_SAMPLE_RATE, VAD_FRAME_LENGTH_MS);
 #else
 #error "No support this version."
 #endif
-        if (vad_state == VAD_SPEECH) {
+        if (vad_state == VAD_SPEECH)
+        {
             Serial.print(millis());
             Serial.println(" Noise detected!!!");
             lv_label_set_text_fmt(noise_cnt, "%lu", noise_count++);
@@ -125,7 +139,6 @@ void loop()
 }
 
 #else
-
 
 #include <Arduino.h>
 
@@ -139,6 +152,5 @@ void loop()
     Serial.println("The currently used version does not support esp_vad and cannot run the noise detection function. If you need to use esp_vad, please change the version to 2.0.9");
     delay(1000);
 }
-
 
 #endif

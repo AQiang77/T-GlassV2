@@ -43,21 +43,15 @@ void gui_vlotage_init(lv_ui *ui);
 void gui_esp_now_init(lv_ui *ui);
 void gui_set_init(lv_ui *ui);
 void gui_set_tileview_init(lv_ui *ui);
-void lv_set_tileview_add(lv_obj_t *sw, lv_obj_t *label, const char* text,uint16_t sw_status);
+void lv_set_tileview_add(lv_obj_t *sw, lv_obj_t *label, const char *text, uint16_t sw_status);
+void gui_wifi_rssi_init(lv_ui *ui);
+void gui_mic_init(lv_ui *ui);
 
 struct menu_icon
 {
     const void *icon_src;
     const char *icon_str;
     int id;
-};
-
-const struct menu_icon icon_buf[MENU_ICON_NUM] = {
-    {&_weitiao1_60x60, "mian", 0},
-    {&_weitiao1_60x60, "info", 1},
-    {&_weitiao1_60x60, "position", 2},
-    {nullptr, "vlotage", 3},
-    {nullptr, "Speech_recognition", 4},
 };
 
 void lv_gui_init(lv_ui *ui)
@@ -77,8 +71,10 @@ void lv_gui_init(lv_ui *ui)
     gui_esp_now_init(ui);
     gui_set_init(ui);
     gui_set_tileview_init(ui);
-    events_init_set_screen(ui);
+    gui_wifi_rssi_init(ui);
+    gui_mic_init(ui);
 
+    events_init_set_screen(ui);
     srceen_current = 0;
 }
 
@@ -120,6 +116,10 @@ void timer_cb(lv_timer_t *t) // 20ms
         lv_label_set_text_fmt(ui.screen_esp_now_label_info, "Int:%d\nFloat:%.2f\nBool:%s", esp_now_data.b,
                               esp_now_data.c,
                               esp_now_data.d ? "true" : "false");
+        if (wifi_connect_status)
+        {
+            lv_label_set_text_fmt(ui.screen_wifi_rssi_num, "Rssi:%d", WiFi.RSSI());
+        }
     }
 }
 
@@ -263,38 +263,6 @@ void imu_timer_cb(lv_timer_t *t) // 20ms
     }
     lv_label_set_text_fmt(ui.screen_sensor_label_info, "Roll:% 3.2f\nPitch:% 3.2f\nYaw:% 3.2f\n", roll, pitch, yaw);
 }
-
-// 从采集的第一个数据对比，若后面的数据与第一数据相差大于稳定范围，则相差大于稳定范围的数据做为第一个数据，若连续20个数据都在一个稳定范围内
-// bool process_data(float data, int stabilityRange, std::vector<float> &output_data)
-// {
-//     output_data.push_back(data);
-//     int count = output_data.size();   // 计算buffer的个数
-//     float firstdata = output_data[0]; // buffer第一个数据
-//     if (std::fabs(std::fabs(output_data[count - 1]) - std::fabs(firstdata)) >= stabilityRange)
-//     {
-//         firstdata = output_data[count];
-//         output_data.clear();
-//         // Serial.println("clear");
-//     }
-//     else
-//     {
-//         if (count >= 30)
-//         {
-//             // double static average = 0;
-//             // uint8_t output_data_size = output_data.size();
-//             // for (int i = 0; i < output_data_size; i++)
-//             // {
-//             //     average += output_data[i];
-//             // }
-//             // average = (float)(average / output_data_size);
-//             // Serial.printf("average: %3f\n", average);
-//             output_data.clear();
-//             return true;
-//         }
-//     }
-//     return false;
-// }
-
 
 //************************************[ screen 0 ]****************************************** time
 void gui_time_init(lv_ui *ui)
@@ -572,7 +540,7 @@ void gui_vlotage_init(lv_ui *ui)
     lv_obj_set_scrollbar_mode(ui->screen_voltage, LV_SCROLLBAR_MODE_OFF);
     lv_obj_set_style_bg_color(ui->screen_voltage, lv_color_black(), LV_PART_MAIN | LV_STATE_DEFAULT);
 
-    //Write codes screen_voltage_bar
+    // Write codes screen_voltage_bar
     ui->screen_voltage_bar = lv_bar_create(ui->screen_voltage);
     lv_obj_set_style_anim_time(ui->screen_voltage_bar, 1000, 0);
     lv_bar_set_mode(ui->screen_voltage_bar, LV_BAR_MODE_NORMAL);
@@ -581,21 +549,21 @@ void gui_vlotage_init(lv_ui *ui)
     lv_obj_set_pos(ui->screen_voltage_bar, 13, 19);
     lv_obj_set_size(ui->screen_voltage_bar, 100, 35);
 
-    //Write style for screen_voltage_bar, Part: LV_PART_MAIN, State: LV_STATE_DEFAULT.
-    lv_obj_set_style_bg_opa(ui->screen_voltage_bar, 115, LV_PART_MAIN|LV_STATE_DEFAULT);
-    lv_obj_set_style_bg_color(ui->screen_voltage_bar, lv_color_hex(0x00f27f), LV_PART_MAIN|LV_STATE_DEFAULT);
-    lv_obj_set_style_bg_grad_dir(ui->screen_voltage_bar, LV_GRAD_DIR_HOR, LV_PART_MAIN|LV_STATE_DEFAULT);
-    lv_obj_set_style_bg_grad_color(ui->screen_voltage_bar, lv_color_hex(0xc5c5c5), LV_PART_MAIN|LV_STATE_DEFAULT);
-    lv_obj_set_style_bg_main_stop(ui->screen_voltage_bar, 0, LV_PART_MAIN|LV_STATE_DEFAULT);
-    lv_obj_set_style_bg_grad_stop(ui->screen_voltage_bar, 255, LV_PART_MAIN|LV_STATE_DEFAULT);
-    lv_obj_set_style_radius(ui->screen_voltage_bar, 30, LV_PART_MAIN|LV_STATE_DEFAULT);
-    lv_obj_set_style_shadow_width(ui->screen_voltage_bar, 0, LV_PART_MAIN|LV_STATE_DEFAULT);
+    // Write style for screen_voltage_bar, Part: LV_PART_MAIN, State: LV_STATE_DEFAULT.
+    lv_obj_set_style_bg_opa(ui->screen_voltage_bar, 115, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(ui->screen_voltage_bar, lv_color_hex(0x00f27f), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_grad_dir(ui->screen_voltage_bar, LV_GRAD_DIR_HOR, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_grad_color(ui->screen_voltage_bar, lv_color_hex(0xc5c5c5), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_main_stop(ui->screen_voltage_bar, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_grad_stop(ui->screen_voltage_bar, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_radius(ui->screen_voltage_bar, 30, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_shadow_width(ui->screen_voltage_bar, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-    //Write style for screen_voltage_bar, Part: LV_PART_INDICATOR, State: LV_STATE_DEFAULT.
-    lv_obj_set_style_bg_opa(ui->screen_voltage_bar, 255, LV_PART_INDICATOR|LV_STATE_DEFAULT);
-    lv_obj_set_style_bg_color(ui->screen_voltage_bar, lv_color_hex(0x00ffaf), LV_PART_INDICATOR|LV_STATE_DEFAULT);
-    lv_obj_set_style_bg_grad_dir(ui->screen_voltage_bar, LV_GRAD_DIR_NONE, LV_PART_INDICATOR|LV_STATE_DEFAULT);
-    lv_obj_set_style_radius(ui->screen_voltage_bar, 30, LV_PART_INDICATOR|LV_STATE_DEFAULT);
+    // Write style for screen_voltage_bar, Part: LV_PART_INDICATOR, State: LV_STATE_DEFAULT.
+    lv_obj_set_style_bg_opa(ui->screen_voltage_bar, 255, LV_PART_INDICATOR | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(ui->screen_voltage_bar, lv_color_hex(0x00ffaf), LV_PART_INDICATOR | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_grad_dir(ui->screen_voltage_bar, LV_GRAD_DIR_NONE, LV_PART_INDICATOR | LV_STATE_DEFAULT);
+    lv_obj_set_style_radius(ui->screen_voltage_bar, 30, LV_PART_INDICATOR | LV_STATE_DEFAULT);
 
     // Write codes screen_voltage_label_vlotage
     ui->screen_voltage_label_vlotage = lv_label_create(ui->screen_voltage);
@@ -824,7 +792,7 @@ void gui_set_init(lv_ui *ui)
 //************************************[ screen 5.1 ]****************************************** set_tileview
 void gui_set_tileview_init(lv_ui *ui)
 {
-    ui->screen_tileview_set= lv_obj_create(NULL);
+    ui->screen_tileview_set = lv_obj_create(NULL);
     lv_obj_set_size(ui->screen_tileview_set, srceen_width, screen_hight);
     lv_obj_set_style_bg_opa(ui->screen_tileview_set, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_scrollbar_mode(ui->screen_tileview_set, LV_SCROLLBAR_MODE_OFF);
@@ -850,7 +818,7 @@ void gui_set_tileview_init(lv_ui *ui)
     lv_obj_set_size(ui->screen_tileview_set_tile, LV_PCT(100), LV_PCT(100));
     lv_obj_set_style_bg_color(ui->screen_tileview_set_tile, lv_color_black(), LV_PART_MAIN);
 
-    //add tile
+    // add tile
     ui->screen_tileview_set_WiFi = lv_tileview_add_tile(ui->screen_tileview_set_tile, 0, 0, LV_DIR_HOR | LV_DIR_BOTTOM);
     ui->screen_tileview_set_ESP_NOW = lv_tileview_add_tile(ui->screen_tileview_set_tile, 0, 1, LV_DIR_HOR | LV_DIR_BOTTOM);
     ui->screen_tileview_set_Switch_page = lv_tileview_add_tile(ui->screen_tileview_set_tile, 0, 2, LV_DIR_HOR | LV_DIR_BOTTOM);
@@ -863,63 +831,176 @@ void gui_set_tileview_init(lv_ui *ui)
     ui->screen_tileview_set_ESP_NOW_label = lv_label_create(ui->screen_tileview_set_ESP_NOW);
     ui->screen_tileview_set_Switch_page_label = lv_label_create(ui->screen_tileview_set_Switch_page);
 
-    lv_set_tileview_add(ui->screen_tileview_set_WiFi_sw,ui->screen_tileview_set_WiFi_label, "WiFi", LV_STATE_CHECKED);
-    lv_set_tileview_add(ui->screen_tileview_set_ESP_NOW_sw,ui->screen_tileview_set_ESP_NOW_label, "ESP-NOW",LV_STATE_DEFAULT);
-    lv_set_tileview_add(ui->screen_tileview_set_Switch_page_sw,ui->screen_tileview_set_Switch_page_label, "Switch Page",LV_STATE_CHECKED);
+    lv_set_tileview_add(ui->screen_tileview_set_WiFi_sw, ui->screen_tileview_set_WiFi_label, "WiFi", LV_STATE_CHECKED);
+    lv_set_tileview_add(ui->screen_tileview_set_ESP_NOW_sw, ui->screen_tileview_set_ESP_NOW_label, "ESP-NOW", LV_STATE_DEFAULT);
+    lv_set_tileview_add(ui->screen_tileview_set_Switch_page_sw, ui->screen_tileview_set_Switch_page_label, "Switch Page", LV_STATE_CHECKED);
 }
 
-void lv_set_tileview_add(lv_obj_t *sw, lv_obj_t *label, const char* text,uint16_t sw_status)
+void lv_set_tileview_add(lv_obj_t *sw, lv_obj_t *label, const char *text, uint16_t sw_status)
 {
     lv_label_set_text(label, text);
     lv_label_set_long_mode(label, LV_LABEL_LONG_WRAP);
     lv_obj_set_pos(label, 13, 30);
     lv_obj_set_size(label, 100, 30);
 
-    //Write style for screen_set_label_1, Part: LV_PART_MAIN, State: LV_STATE_DEFAULT.
-    lv_obj_set_style_border_width(label, 0, LV_PART_MAIN|LV_STATE_DEFAULT);
-    lv_obj_set_style_radius(label, 0, LV_PART_MAIN|LV_STATE_DEFAULT);
-    lv_obj_set_style_text_color(label, lv_color_hex(0xffffff), LV_PART_MAIN|LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(label, &lv_font_SourceHanSerifSC_Regular_16, LV_PART_MAIN|LV_STATE_DEFAULT);
-    lv_obj_set_style_text_opa(label, 255, LV_PART_MAIN|LV_STATE_DEFAULT);
-    lv_obj_set_style_text_letter_space(label, 0, LV_PART_MAIN|LV_STATE_DEFAULT);
-    lv_obj_set_style_text_line_space(label, 0, LV_PART_MAIN|LV_STATE_DEFAULT);
-    lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN|LV_STATE_DEFAULT);
-    lv_obj_set_style_bg_opa(label, 0, LV_PART_MAIN|LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_top(label, 0, LV_PART_MAIN|LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_right(label, 0, LV_PART_MAIN|LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_bottom(label, 0, LV_PART_MAIN|LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_left(label, 0, LV_PART_MAIN|LV_STATE_DEFAULT);
-    lv_obj_set_style_shadow_width(label, 0, LV_PART_MAIN|LV_STATE_DEFAULT);
+    // Write style for screen_set_label_1, Part: LV_PART_MAIN, State: LV_STATE_DEFAULT.
+    lv_obj_set_style_border_width(label, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_radius(label, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_color(label, lv_color_hex(0xffffff), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(label, &lv_font_SourceHanSerifSC_Regular_16, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_opa(label, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_letter_space(label, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_line_space(label, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(label, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_top(label, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(label, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_bottom(label, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_left(label, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_shadow_width(label, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-    //Write codes screen_set_sw_1
+    // Write codes screen_set_sw_1
     lv_obj_set_pos(sw, 33, 70);
     lv_obj_set_size(sw, 60, 25);
 
     lv_obj_add_state(sw, sw_status);
 
-    //Write style for screen_set_sw_1, Part: LV_PART_MAIN, State: LV_STATE_DEFAULT.
-    lv_obj_set_style_bg_opa(sw, 255, LV_PART_MAIN|LV_STATE_DEFAULT);
-    lv_obj_set_style_bg_color(sw, lv_color_hex(0xb2b2b2), LV_PART_MAIN|LV_STATE_DEFAULT);
-    lv_obj_set_style_bg_grad_dir(sw, LV_GRAD_DIR_NONE, LV_PART_MAIN|LV_STATE_DEFAULT);
-    lv_obj_set_style_border_width(sw, 0, LV_PART_MAIN|LV_STATE_DEFAULT);
-    lv_obj_set_style_radius(sw, 10, LV_PART_MAIN|LV_STATE_DEFAULT);
-    lv_obj_set_style_shadow_width(sw, 0, LV_PART_MAIN|LV_STATE_DEFAULT);
+    // Write style for screen_set_sw_1, Part: LV_PART_MAIN, State: LV_STATE_DEFAULT.
+    lv_obj_set_style_bg_opa(sw, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(sw, lv_color_hex(0xb2b2b2), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_grad_dir(sw, LV_GRAD_DIR_NONE, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(sw, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_radius(sw, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_shadow_width(sw, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-    //Write style for screen_set_sw_1, Part: LV_PART_INDICATOR, State: LV_STATE_CHECKED.
-    lv_obj_set_style_bg_opa(sw, 223, LV_PART_INDICATOR|LV_STATE_CHECKED);
-    lv_obj_set_style_bg_color(sw, lv_color_hex(0x13359a), LV_PART_INDICATOR|LV_STATE_CHECKED);
-    lv_obj_set_style_bg_grad_dir(sw, LV_GRAD_DIR_HOR, LV_PART_INDICATOR|LV_STATE_CHECKED);
-    lv_obj_set_style_bg_grad_color(sw, lv_color_hex(0x2195f6), LV_PART_INDICATOR|LV_STATE_CHECKED);
-    lv_obj_set_style_bg_main_stop(sw, 0, LV_PART_INDICATOR|LV_STATE_CHECKED);
-    lv_obj_set_style_bg_grad_stop(sw, 0, LV_PART_INDICATOR|LV_STATE_CHECKED);
-    lv_obj_set_style_border_width(sw, 0, LV_PART_INDICATOR|LV_STATE_CHECKED);
+    // Write style for screen_set_sw_1, Part: LV_PART_INDICATOR, State: LV_STATE_CHECKED.
+    lv_obj_set_style_bg_opa(sw, 223, LV_PART_INDICATOR | LV_STATE_CHECKED);
+    lv_obj_set_style_bg_color(sw, lv_color_hex(0x13359a), LV_PART_INDICATOR | LV_STATE_CHECKED);
+    lv_obj_set_style_bg_grad_dir(sw, LV_GRAD_DIR_HOR, LV_PART_INDICATOR | LV_STATE_CHECKED);
+    lv_obj_set_style_bg_grad_color(sw, lv_color_hex(0x2195f6), LV_PART_INDICATOR | LV_STATE_CHECKED);
+    lv_obj_set_style_bg_main_stop(sw, 0, LV_PART_INDICATOR | LV_STATE_CHECKED);
+    lv_obj_set_style_bg_grad_stop(sw, 0, LV_PART_INDICATOR | LV_STATE_CHECKED);
+    lv_obj_set_style_border_width(sw, 0, LV_PART_INDICATOR | LV_STATE_CHECKED);
 
-    //Write style for screen_set_sw_1, Part: LV_PART_KNOB, State: LV_STATE_DEFAULT.
-    lv_obj_set_style_bg_opa(sw, 255, LV_PART_KNOB|LV_STATE_DEFAULT);
-    lv_obj_set_style_bg_color(sw, lv_color_hex(0xffffff), LV_PART_KNOB|LV_STATE_DEFAULT);
-    lv_obj_set_style_bg_grad_dir(sw, LV_GRAD_DIR_NONE, LV_PART_KNOB|LV_STATE_DEFAULT);
-    lv_obj_set_style_border_width(sw, 0, LV_PART_KNOB|LV_STATE_DEFAULT);
-    lv_obj_set_style_radius(sw, 10, LV_PART_KNOB|LV_STATE_DEFAULT);
+    // Write style for screen_set_sw_1, Part: LV_PART_KNOB, State: LV_STATE_DEFAULT.
+    lv_obj_set_style_bg_opa(sw, 255, LV_PART_KNOB | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(sw, lv_color_hex(0xffffff), LV_PART_KNOB | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_grad_dir(sw, LV_GRAD_DIR_NONE, LV_PART_KNOB | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(sw, 0, LV_PART_KNOB | LV_STATE_DEFAULT);
+    lv_obj_set_style_radius(sw, 10, LV_PART_KNOB | LV_STATE_DEFAULT);
 }
 
+//************************************[ screen 6 ]****************************************** wifi rssi
+void gui_wifi_rssi_init(lv_ui *ui)
+{
+    ui->screen_wifi_rssi = lv_obj_create(NULL);
+    lv_obj_set_size(ui->screen_wifi_rssi, srceen_width, screen_hight);
+    lv_obj_set_style_bg_opa(ui->screen_wifi_rssi, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_scrollbar_mode(ui->screen_wifi_rssi, LV_SCROLLBAR_MODE_OFF);
+    lv_obj_set_style_bg_color(ui->screen_wifi_rssi, lv_color_black(), LV_PART_MAIN | LV_STATE_DEFAULT);
 
+    ui->screen_wifi_rssi_cont = lv_obj_create(ui->screen_wifi_rssi);
+    lv_obj_set_pos(ui->screen_wifi_rssi_cont, srceen_cont_pos_x, srceen_cont_pos_y);
+    lv_obj_set_size(ui->screen_wifi_rssi_cont, 126, 126);
+    lv_obj_set_scrollbar_mode(ui->screen_wifi_rssi_cont, LV_SCROLLBAR_MODE_OFF);
+
+    lv_obj_set_style_bg_color(ui->screen_wifi_rssi_cont, lv_color_black(), LV_PART_MAIN);
+    lv_obj_set_style_border_width(ui->screen_wifi_rssi_cont, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_radius(ui->screen_wifi_rssi_cont, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(ui->screen_wifi_rssi_cont, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_grad_dir(ui->screen_wifi_rssi_cont, LV_GRAD_DIR_NONE, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_top(ui->screen_wifi_rssi_cont, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_bottom(ui->screen_wifi_rssi_cont, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_left(ui->screen_wifi_rssi_cont, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(ui->screen_wifi_rssi_cont, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_shadow_width(ui->screen_wifi_rssi_cont, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    ui->screen_wifi_rssi_label = lv_label_create(ui->screen_wifi_rssi_cont);
+    lv_obj_set_style_text_color(ui->screen_wifi_rssi_label, lv_color_white(), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui->screen_wifi_rssi_label, &lv_font_Acme_Regular_20, LV_PART_MAIN);
+    lv_obj_set_pos(ui->screen_wifi_rssi_label, 13, 10);
+    lv_obj_set_size(ui->screen_wifi_rssi_label, 100, 30);
+    lv_label_set_text(ui->screen_wifi_rssi_label, "WiFi:");
+    lv_obj_set_style_text_align(ui->screen_wifi_rssi_label, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    ui->screen_wifi_rssi_num = lv_label_create(ui->screen_wifi_rssi_cont);
+    lv_obj_set_pos(ui->screen_wifi_rssi_num, 13, 50);
+    lv_obj_set_size(ui->screen_wifi_rssi_num, 100, 20);
+    lv_obj_set_style_text_color(ui->screen_wifi_rssi_num, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_text_font(ui->screen_wifi_rssi_num, &lv_font_SourceHanSerifSC_Regular_16, LV_PART_MAIN);
+    lv_label_set_text_fmt(ui->screen_wifi_rssi_num, "Rssi:%d", 0);
+    // lv_obj_align_to(ui->screen_wifi_rssi_num, ui->screen_wifi_rssi_label, LV_ALIGN_OUT_BOTTOM_MID, 0, 15);
+    lv_obj_set_style_text_align(ui->screen_wifi_rssi_num, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    scr_arry[srceen_current++] = ui->screen_wifi_rssi;
+}
+
+//************************************[ screen 7 ]****************************************** mic
+void gui_mic_init(lv_ui *ui)
+{
+    ui->screen_mic = lv_obj_create(NULL);
+    lv_obj_set_size(ui->screen_mic, srceen_width, screen_hight);
+    lv_obj_set_style_bg_opa(ui->screen_mic, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_scrollbar_mode(ui->screen_mic, LV_SCROLLBAR_MODE_OFF);
+    lv_obj_set_style_bg_color(ui->screen_mic, lv_color_black(), LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    ui->screen_mic_cont = lv_obj_create(ui->screen_mic);
+    lv_obj_set_pos(ui->screen_mic_cont, srceen_cont_pos_x, srceen_cont_pos_y);
+    lv_obj_set_size(ui->screen_mic_cont, 126, 126);
+    lv_obj_set_scrollbar_mode(ui->screen_mic_cont, LV_SCROLLBAR_MODE_OFF);
+
+    lv_obj_set_style_bg_color(ui->screen_mic_cont, lv_color_black(), LV_PART_MAIN);
+    lv_obj_set_style_border_width(ui->screen_mic_cont, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_radius(ui->screen_mic_cont, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(ui->screen_mic_cont, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_grad_dir(ui->screen_mic_cont, LV_GRAD_DIR_NONE, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_top(ui->screen_mic_cont, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_bottom(ui->screen_mic_cont, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_left(ui->screen_mic_cont, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(ui->screen_mic_cont, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_shadow_width(ui->screen_mic_cont, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    ui->screen_mic_label = lv_label_create(ui->screen_mic_cont);
+    lv_obj_set_style_text_color(ui->screen_mic_label, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_text_font(ui->screen_mic_label, &lv_font_Acme_Regular_24, LV_PART_MAIN);
+    lv_obj_set_pos(ui->screen_mic_label, 13, 10);
+    lv_obj_set_size(ui->screen_mic_label, 100, 30);
+    lv_label_set_text(ui->screen_mic_label, "Mic:");
+    lv_obj_set_style_text_align(ui->screen_mic_label, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    ui->screen_mic_count = lv_label_create(ui->screen_mic_cont);
+    lv_obj_set_pos(ui->screen_mic_count, 13, 50);
+    lv_obj_set_size(ui->screen_mic_count, 100, 25);
+    lv_obj_set_style_text_color(ui->screen_mic_count, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_text_font(ui->screen_mic_count, &lv_font_SourceHanSerifSC_Regular_16, LV_PART_MAIN);
+    lv_label_set_text_fmt(ui->screen_mic_count, "Noise:%d", 0);
+    // lv_obj_align_to(ui->screen_mic_count, ui->screen_mic_label, LV_ALIGN_OUT_BOTTOM_MID, 0, 15);
+    lv_obj_set_style_text_align(ui->screen_mic_count, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    lv_timer_create([](lv_timer_t *t)
+                    {
+                                      lv_obj_t *label = (lv_obj_t *)t->user_data;
+
+                                      size_t read_len;
+
+                                      if (!vad_buff)
+                                          return;
+                                      if (amoled.readMicrophone((char *)vad_buff, VAD_BUFFER_LENGTH * sizeof(short), &read_len))
+                                      {
+            // Feed samples to the VAD process and get the result
+#if ESP_IDF_VERSION_VAL(4, 4, 1) == ESP_IDF_VERSION
+                                          vad_state_t vad_state = vad_process(vad_inst, vad_buff);
+#elif ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(4, 4, 1)
+                                          vad_state_t vad_state = vad_process(vad_inst, vad_buff, MIC_I2S_SAMPLE_RATE, VAD_FRAME_LENGTH_MS);
+#else
+#error "No support this version."
+#endif
+                                          if (vad_state == VAD_SPEECH)
+                                          {
+                                              lv_label_set_text_fmt(label, "Noise:%lu", noise_count++);
+                                          }
+                                      } },
+                    100, ui->screen_mic_count);
+
+    scr_arry[srceen_current++] = ui->screen_mic;
+}
