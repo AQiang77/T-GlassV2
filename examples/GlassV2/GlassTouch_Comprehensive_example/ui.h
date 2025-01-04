@@ -93,6 +93,11 @@ typedef struct
 	lv_obj_t *screen_wifi_rssi;
 	lv_obj_t *screen_wifi_rssi_label;
 	lv_obj_t *screen_wifi_rssi_num;
+	lv_obj_t *screen_wifi_cont_Signal;
+	lv_obj_t *screen_wifi_line4;
+	lv_obj_t *screen_wifi_line3;
+	lv_obj_t *screen_wifi_line2;
+	lv_obj_t *screen_wifi_line1;
 	
 	lv_obj_t *screen_mic;
 	lv_obj_t *screen_mic_label;

@@ -118,7 +118,50 @@ void timer_cb(lv_timer_t *t) // 20ms
                               esp_now_data.d ? "true" : "false");
         if (wifi_connect_status)
         {
-            lv_label_set_text_fmt(ui.screen_wifi_rssi_num, "Rssi:%d", WiFi.RSSI());
+            int rssi = WiFi.RSSI();
+            lv_label_set_text_fmt(ui.screen_wifi_rssi_num, "Rssi:%d", rssi);
+            if (rssi >= -20)
+            {
+                lv_obj_set_style_line_color(ui.screen_wifi_line1, lv_color_white(), LV_PART_MAIN | LV_STATE_DEFAULT);
+                lv_obj_set_style_line_color(ui.screen_wifi_line2, lv_color_white(), LV_PART_MAIN | LV_STATE_DEFAULT);
+                lv_obj_set_style_line_color(ui.screen_wifi_line3, lv_color_white(), LV_PART_MAIN | LV_STATE_DEFAULT);
+                lv_obj_set_style_line_color(ui.screen_wifi_line4, lv_color_white(), LV_PART_MAIN | LV_STATE_DEFAULT);
+            }
+            else if (rssi >= -40)
+            {
+                lv_obj_set_style_line_color(ui.screen_wifi_line1, lv_color_white(), LV_PART_MAIN | LV_STATE_DEFAULT);
+                lv_obj_set_style_line_color(ui.screen_wifi_line2, lv_color_white(), LV_PART_MAIN | LV_STATE_DEFAULT);
+                lv_obj_set_style_line_color(ui.screen_wifi_line3, lv_color_white(), LV_PART_MAIN | LV_STATE_DEFAULT);
+                lv_obj_set_style_line_color(ui.screen_wifi_line4, lv_color_hex(0x757575), LV_PART_MAIN | LV_STATE_DEFAULT);
+            }
+            else if (rssi >= -80)
+            {
+                lv_obj_set_style_line_color(ui.screen_wifi_line1, lv_color_white(), LV_PART_MAIN | LV_STATE_DEFAULT);
+                lv_obj_set_style_line_color(ui.screen_wifi_line2, lv_color_white(), LV_PART_MAIN | LV_STATE_DEFAULT);
+                lv_obj_set_style_line_color(ui.screen_wifi_line3, lv_color_hex(0x757575), LV_PART_MAIN | LV_STATE_DEFAULT);
+                lv_obj_set_style_line_color(ui.screen_wifi_line4, lv_color_hex(0x757575), LV_PART_MAIN | LV_STATE_DEFAULT);
+            }
+            else if (rssi >= -100)
+            {
+                lv_obj_set_style_line_color(ui.screen_wifi_line1, lv_color_white(), LV_PART_MAIN | LV_STATE_DEFAULT);
+                lv_obj_set_style_line_color(ui.screen_wifi_line2, lv_color_hex(0x757575), LV_PART_MAIN | LV_STATE_DEFAULT);
+                lv_obj_set_style_line_color(ui.screen_wifi_line3, lv_color_hex(0x757575), LV_PART_MAIN | LV_STATE_DEFAULT);
+                lv_obj_set_style_line_color(ui.screen_wifi_line4, lv_color_hex(0x757575), LV_PART_MAIN | LV_STATE_DEFAULT);
+            }
+            else if (rssi < -100)
+            {
+                lv_obj_set_style_line_color(ui.screen_wifi_line1, lv_color_hex(0x757575), LV_PART_MAIN | LV_STATE_DEFAULT);
+                lv_obj_set_style_line_color(ui.screen_wifi_line2, lv_color_hex(0x757575), LV_PART_MAIN | LV_STATE_DEFAULT);
+                lv_obj_set_style_line_color(ui.screen_wifi_line3, lv_color_hex(0x757575), LV_PART_MAIN | LV_STATE_DEFAULT);
+                lv_obj_set_style_line_color(ui.screen_wifi_line4, lv_color_hex(0x757575), LV_PART_MAIN | LV_STATE_DEFAULT);
+            }
+        }
+        else
+        {
+            lv_obj_set_style_line_color(ui.screen_wifi_line1, lv_color_hex(0x757575), LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_line_color(ui.screen_wifi_line2, lv_color_hex(0x757575), LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_line_color(ui.screen_wifi_line3, lv_color_hex(0x757575), LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_line_color(ui.screen_wifi_line4, lv_color_hex(0x757575), LV_PART_MAIN | LV_STATE_DEFAULT);
         }
     }
 }
@@ -918,8 +961,8 @@ void gui_wifi_rssi_init(lv_ui *ui)
     ui->screen_wifi_rssi_label = lv_label_create(ui->screen_wifi_rssi_cont);
     lv_obj_set_style_text_color(ui->screen_wifi_rssi_label, lv_color_white(), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_font(ui->screen_wifi_rssi_label, &lv_font_Acme_Regular_20, LV_PART_MAIN);
-    lv_obj_set_pos(ui->screen_wifi_rssi_label, 13, 10);
-    lv_obj_set_size(ui->screen_wifi_rssi_label, 100, 30);
+    lv_obj_set_pos(ui->screen_wifi_rssi_label, 25, 10);
+    lv_obj_set_size(ui->screen_wifi_rssi_label, 50, 30);
     lv_label_set_text(ui->screen_wifi_rssi_label, "WiFi:");
     lv_obj_set_style_text_align(ui->screen_wifi_rssi_label, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
 
@@ -931,6 +974,88 @@ void gui_wifi_rssi_init(lv_ui *ui)
     lv_label_set_text_fmt(ui->screen_wifi_rssi_num, "Rssi:%d", 0);
     // lv_obj_align_to(ui->screen_wifi_rssi_num, ui->screen_wifi_rssi_label, LV_ALIGN_OUT_BOTTOM_MID, 0, 15);
     lv_obj_set_style_text_align(ui->screen_wifi_rssi_num, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    // Write codes screen_wifi_cont_Signal
+    ui->screen_wifi_cont_Signal = lv_obj_create(ui->screen_wifi_rssi_cont);
+    lv_obj_set_pos(ui->screen_wifi_cont_Signal, 80, 0);
+    lv_obj_set_size(ui->screen_wifi_cont_Signal, 20, 30);
+    lv_obj_set_scrollbar_mode(ui->screen_wifi_cont_Signal, LV_SCROLLBAR_MODE_OFF);
+
+    // Write style for screen_wifi_cont_Signal, Part: LV_PART_MAIN, State: LV_STATE_DEFAULT.
+    lv_obj_set_style_border_width(ui->screen_wifi_cont_Signal, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_radius(ui->screen_wifi_cont_Signal, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(ui->screen_wifi_cont_Signal, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(ui->screen_wifi_cont_Signal, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_grad_dir(ui->screen_wifi_cont_Signal, LV_GRAD_DIR_NONE, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_top(ui->screen_wifi_cont_Signal, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_bottom(ui->screen_wifi_cont_Signal, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_left(ui->screen_wifi_cont_Signal, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(ui->screen_wifi_cont_Signal, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_shadow_width(ui->screen_wifi_cont_Signal, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    // Write codes screen_wifi_line4
+    ui->screen_wifi_line4 = lv_line_create(ui->screen_wifi_cont_Signal);
+    static lv_point_t screen_wifi_line4[] = {
+        {0, 0},
+        {0, 20},
+    };
+    lv_line_set_points(ui->screen_wifi_line4, screen_wifi_line4, 2);
+    lv_obj_set_pos(ui->screen_wifi_line4, 18, 5);
+    lv_obj_set_size(ui->screen_wifi_line4, 2, 25);
+
+    // Write style for screen_wifi_line4, Part: LV_PART_MAIN, State: LV_STATE_DEFAULT.
+    lv_obj_set_style_line_width(ui->screen_wifi_line4, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_line_color(ui->screen_wifi_line4, lv_color_hex(0x757575), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_line_opa(ui->screen_wifi_line4, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_line_rounded(ui->screen_wifi_line4, true, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    // Write codes screen_wifi_line3
+    ui->screen_wifi_line3 = lv_line_create(ui->screen_wifi_cont_Signal);
+    static lv_point_t screen_wifi_line3[] = {
+        {0, 5},
+        {0, 20},
+    };
+    lv_line_set_points(ui->screen_wifi_line3, screen_wifi_line3, 2);
+    lv_obj_set_pos(ui->screen_wifi_line3, 13, 5);
+    lv_obj_set_size(ui->screen_wifi_line3, 2, 25);
+
+    // Write style for screen_wifi_line3, Part: LV_PART_MAIN, State: LV_STATE_DEFAULT.
+    lv_obj_set_style_line_width(ui->screen_wifi_line3, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_line_color(ui->screen_wifi_line3, lv_color_hex(0x757575), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_line_opa(ui->screen_wifi_line3, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_line_rounded(ui->screen_wifi_line3, true, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    // Write codes screen_wifi_line2
+    ui->screen_wifi_line2 = lv_line_create(ui->screen_wifi_cont_Signal);
+    static lv_point_t screen_wifi_line2[] = {
+        {0, 10},
+        {0, 20},
+    };
+    lv_line_set_points(ui->screen_wifi_line2, screen_wifi_line2, 2);
+    lv_obj_set_pos(ui->screen_wifi_line2, 8, 5);
+    lv_obj_set_size(ui->screen_wifi_line2, 2, 25);
+
+    // Write style for screen_wifi_line2, Part: LV_PART_MAIN, State: LV_STATE_DEFAULT.
+    lv_obj_set_style_line_width(ui->screen_wifi_line2, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_line_color(ui->screen_wifi_line2, lv_color_hex(0x757575), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_line_opa(ui->screen_wifi_line2, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_line_rounded(ui->screen_wifi_line2, true, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    // Write codes screen_wifi_line1
+    ui->screen_wifi_line1 = lv_line_create(ui->screen_wifi_cont_Signal);
+    static lv_point_t screen_wifi_line1[] = {
+        {0, 15},
+        {0, 20},
+    };
+    lv_line_set_points(ui->screen_wifi_line1, screen_wifi_line1, 2);
+    lv_obj_set_pos(ui->screen_wifi_line1, 3, 5);
+    lv_obj_set_size(ui->screen_wifi_line1, 2, 25);
+
+    // Write style for screen_wifi_line1, Part: LV_PART_MAIN, State: LV_STATE_DEFAULT.
+    lv_obj_set_style_line_width(ui->screen_wifi_line1, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_line_color(ui->screen_wifi_line1, lv_color_hex(0x757575), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_line_opa(ui->screen_wifi_line1, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_line_rounded(ui->screen_wifi_line1, true, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     scr_arry[srceen_current++] = ui->screen_wifi_rssi;
 }
