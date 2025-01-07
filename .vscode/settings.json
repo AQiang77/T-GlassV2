@@ -49,6 +49,7 @@
         "cinttypes": "cpp",
         "typeinfo": "cpp",
         "*.tpp": "cpp",
-        "rlottie_capi.h": "c"
+        "rlottie_capi.h": "c",
+        "chrono": "cpp"
     }
 }

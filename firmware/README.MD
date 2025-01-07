@@ -20,7 +20,7 @@
 
 - Download [Flash_download_tool](https://www.espressif.com.cn/sites/default/files/tools/flash_download_tool_3.9.5_0.zip)
 
-![web_flasher](./images/download.png)
+![web_flasher](./T-GlassV2-Factory/download.png)
 
 * Note that after writing is completed, you need to press RST to reset.
 
@@ -28,7 +28,7 @@
 
 - [ESP Web Flasher Online](https://espressif.github.io/esptool-js/)
 
-![web_flasher](./images/download_web.png)
+![web_flasher](./T-GlassV2-Factory/web_download.png)
 
 * Note that after writing is completed, you need to press RST to reset.
 
